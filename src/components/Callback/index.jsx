@@ -2,8 +2,20 @@ import { Component } from 'react'; // eslint-disable-line import/no-extraneous-d
 import { func } from 'prop-types'; // eslint-disable-line import/no-extraneous-dependencies
 import { CHANNEL } from '../../util';
 
+/**
+ * A component that responds to an Auth0 authorization flow.
+ * This component should be rendered in the callback page that Auth0
+ * redirects to. When using the popup flow, the component will automatically
+ * close the popup, otherwise you can handle next steps using `onReady`,
+ * typically by redirecting back to the page that contained the Authorization
+ * component.
+ */
 export default class Callback extends Component {
   static propTypes = {
+    /**
+     * Execute a function once the component renders. Typically used
+     * to redirect to the Authorization component page after the login flow.
+     */
     onReady: func,
   };
 
