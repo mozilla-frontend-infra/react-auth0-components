@@ -1,0 +1,22 @@
+{
+  "name": "react-auth0-components",
+  "version": "1.0.0",
+  "main": "build/index.js",
+  "author": "Eli Perelman <eli@eliperelman.com>",
+  "license": "MPL-2.0",
+  "repository": "mozilla-frontend-infra/react-auth0-components",
+  "scripts": {
+    "build": "neutrino build",
+    "lint": "neutrino lint"
+  },
+  "devDependencies": {
+    "neutrino": "^8.1.2",
+    "neutrino-preset-mozilla-frontend-infra": "^3.1.1",
+    "prop-types": "^15.6.1",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0"
+  },
+  "dependencies": {
+    "auth0-js": "^9.3.3"
+  }
+}
