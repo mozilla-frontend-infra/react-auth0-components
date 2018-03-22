@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { Callback } from 'react-auth0-component';
+import { Callback } from 'react-auth0-components';
 
 // This page is rendered when Auth0 calls back to our application
 // after the authorization flow. Since this is a redirect-based app,

@@ -1,5 +1,5 @@
 import { Component } from 'react';
-import { Authorize } from 'react-auth0-component';
+import { Authorize } from 'react-auth0-components';
 
 export default class Home extends Component {
   state = {
