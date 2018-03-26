@@ -1,7 +1,7 @@
 import { Component } from 'react'; // eslint-disable-line import/no-extraneous-dependencies
 import { bool, func, number, string } from 'prop-types'; // eslint-disable-line import/no-extraneous-dependencies
 import { WebAuth } from 'auth0-js';
-import { CHANNEL } from '../../util';
+import { CHANNEL, SESSION } from '../../util';
 
 /**
  * A component which starts an Auth0 authorization flow,
@@ -39,10 +39,26 @@ export default class Authorize extends Component {
      */
     authorize: bool,
     /**
+     * Execute a function after authorization. Received an object with 2
+     * properties:
+     *   `userInfo`: Correlates to the information returned by the `userInfo()`
+     *     call to Auth0:
+     *     https://auth0.com/docs/libraries/auth0js/v9#extract-the-authresult-and-get-user-info
+     *   `authResult`: Correlates to the information returned by the
+     *     `parseHash()` call to Auth0. Can include `accessToken`, `expiresIn`,
+     *     and `idToken`, depending on the login method used.
+     *     https://auth0.com/docs/libraries/auth0js/v9#extract-the-authresult-and-get-user-info
+     */
+    onAuthorize: func,
+    /**
      * Open the authorization flow in a popup; useful for single-page apps or
      * flows where you do not wish to interrupt the current page state.
      */
     popup: bool,
+    /**
+     * Specify `true` to disable automatic renewal of an Auth0 session.
+     */
+    disableAutoRenew: bool,
     /**
      * The default audience to be used for requesting Auth0 API access.
      */
@@ -102,7 +118,7 @@ export default class Authorize extends Component {
   };
 
   static get AUTHORIZATION_DONE() {
-    return !!localStorage.getItem(CHANNEL);
+    return !!(localStorage.getItem(CHANNEL) || localStorage.getItem(SESSION));
   }
 
   state = {
@@ -118,11 +134,31 @@ export default class Authorize extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    this.auth = this.getAuthClient(nextProps);
-    this.authCheck(nextProps);
+    if (
+      'authorize' in nextProps ||
+      nextProps.domain !== this.props.domain ||
+      nextProps.clientID !== this.props.clientID ||
+      nextProps.audience !== this.props.audience ||
+      nextProps.connection !== this.props.connection ||
+      nextProps.scope !== this.props.scope ||
+      nextProps.responseMode !== this.props.responseMode ||
+      nextProps.redirectUri !== this.props.redirectUri ||
+      nextProps.leeway !== this.props.leeway ||
+      nextProps.disableDeprecationWarnings !==
+        this.props.disableDeprecationWarnings
+    ) {
+      this.auth = this.getAuthClient(nextProps);
+      this.authCheck(nextProps);
+    } else if (nextProps.disableAutoRenew && this.renewalTimer) {
+      clearTimeout(this.renewalTimer);
+    }
   }
 
   authCheck(props) {
+    if (this.renewalTimer) {
+      clearTimeout(this.renewalTimer);
+    }
+
     if (props.authorize) {
       this.authorize(props);
     } else {
@@ -181,10 +217,86 @@ export default class Authorize extends Component {
     });
   }
 
+  persistSession({
+    authResult = this.state.authResult,
+    userInfo = this.state.userInfo,
+  }) {
+    localStorage.setItem(
+      SESSION,
+      JSON.stringify({
+        authResult,
+        userInfo,
+        expiration: new Date(
+          Date.now() + authResult.expiresIn * 1000
+        ).toISOString(),
+      })
+    );
+  }
+
+  renew = () =>
+    new Promise((resolve, reject) => {
+      this.auth.checkSession({}, (err, authResult) => {
+        if (authResult) {
+          this.persistSession({ authResult });
+          this.scheduleRenewal(authResult.expiresIn);
+        }
+
+        const error =
+          err || (authResult ? null : new Error('No authorization result'));
+
+        if (error) {
+          reject(error);
+        } else {
+          resolve(authResult);
+        }
+      });
+    });
+
+  scheduleRenewal() {
+    const expiration = new Date(
+      JSON.parse(localStorage.getItem(SESSION)).expiration
+    );
+    const now = new Date();
+    const delay = Math.max(0, expiration - now);
+
+    this.renewalTimer = setTimeout(async () => {
+      try {
+        this.setState({
+          authResult: await this.renew(),
+        });
+      } catch (error) {
+        this.setState({
+          error,
+          authResult: null,
+          userInfo: null,
+        });
+      }
+    }, delay);
+  }
+
   async login() {
     try {
-      const authResult = await this.parse();
-      const userInfo = await this.userInfo(authResult.accessToken);
+      const existingSession = localStorage.getItem(SESSION);
+      const session = existingSession && JSON.parse(existingSession);
+      const expiration = session && new Date(session.expiration);
+      const now = new Date();
+      // eslint-disable-next-line no-nested-ternary
+      const authResult = expiration
+        ? expiration > now ? session.authResult : await this.renew()
+        : await this.parse();
+      const userInfo = session
+        ? session.userInfo
+        : await this.userInfo(authResult.accessToken);
+
+      this.persistSession({ authResult, userInfo });
+
+      if (!this.props.disableAutoRenew) {
+        this.scheduleRenewal(authResult.expiresIn);
+      }
+
+      if (this.props.onAuthorize) {
+        this.props.onAuthorize({ authResult, userInfo });
+      }
 
       this.setState({
         error: null,
