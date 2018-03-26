@@ -60,4 +60,5 @@ typings/
 # build directory
 lib
 build
+es5
 styleguide

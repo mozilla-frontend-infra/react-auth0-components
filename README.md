@@ -1,8 +1,8 @@
 # React Auth0 Components
 
 React components for making the authentication flows of Auth0 more declarative,
-using React paradigms. Supports authorization via redirect or `popup` flows, which can be used in
-single-page or multi-page apps.
+using React paradigms. Supports authorization via redirect or `popup` flows,
+which can be used in single-page or multi-page apps.
 
 ## Getting started
 
@@ -17,7 +17,8 @@ npm install --save react-auth0-components
 ```
 
 The core components from `react-auth0-components` are `<Authorize />` and
-`<Callback />`. This module can be required via ES imports, CommonJS require, or UMD.
+`<Callback />`. This module can be required via ES imports, CommonJS require,
+or UMD.
 
 ```js
 import { Authorize } from 'react-auth0-components';
@@ -28,13 +29,13 @@ const { Callback } = require('react-auth0-components');
 
 **Important! If you are using Create React App, you will need to import the
 ES5 versions of components.
-These are located at `react-auth0-components/build/Authorize.es5.js`, e.g.:**
+These are located at `react-auth0-components/es5`, e.g.:**
 
 ```js
-import Authorize from 'react-auth0-components/build/Authorize.es5';
+import { Authorize } from 'react-auth0-components/es5';
 
 // using require
-const Callback = require('react-lazylog/build/Callback.es5');
+const { Callback } = require('react-auth0-components/es5');
 ```
 
 ## Usage
