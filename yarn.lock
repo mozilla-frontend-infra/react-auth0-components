@@ -6565,9 +6565,9 @@ neutrino-middleware-styleguidist@^1.0.2:
     ora "^1.3.0"
     react-styleguidist "^6.2.0"
 
-neutrino-preset-mozilla-frontend-infra@^4.1.6:
-  version "4.1.6"
-  resolved "http://localhost:4873/neutrino-preset-mozilla-frontend-infra/-/neutrino-preset-mozilla-frontend-infra-4.1.6.tgz#3ec86e79129f925ebabf313a8f77d548cb869738"
+neutrino-preset-mozilla-frontend-infra@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/neutrino-preset-mozilla-frontend-infra/-/neutrino-preset-mozilla-frontend-infra-4.1.0.tgz#92a05e8f9ae8ef989c56db21e39bfd3cf9e931f7"
   dependencies:
     "@neutrinojs/airbnb" "^8.1.2"
     "@neutrinojs/airbnb-base" "^8.1.2"
