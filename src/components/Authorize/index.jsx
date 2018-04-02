@@ -24,7 +24,7 @@ export default class Authorize extends Component {
      *     and `idToken`, depending on the login method used.
      *     https://auth0.com/docs/libraries/auth0js/v9#extract-the-authresult-and-get-user-info
      */
-    render: func.isRequired,
+    render: func,
     /**
      * Your Auth0 account domain (ex. myaccount.auth0.com).
      */
@@ -50,6 +50,11 @@ export default class Authorize extends Component {
      *     https://auth0.com/docs/libraries/auth0js/v9#extract-the-authresult-and-get-user-info
      */
     onAuthorize: func,
+    /**
+     * Execute a function if authorization fails. Receives a single argument
+     * consisting of the error object.
+     */
+    onError: func,
     /**
      * Open the authorization flow in a popup; useful for single-page apps or
      * flows where you do not wish to interrupt the current page state.
@@ -135,7 +140,8 @@ export default class Authorize extends Component {
 
   componentWillReceiveProps(nextProps) {
     if (
-      'authorize' in nextProps ||
+      ('authorize' in nextProps &&
+        nextProps.authorize !== this.props.authorize) ||
       nextProps.domain !== this.props.domain ||
       nextProps.clientID !== this.props.clientID ||
       nextProps.audience !== this.props.audience ||
@@ -163,6 +169,7 @@ export default class Authorize extends Component {
       this.authorize(props);
     } else {
       localStorage.removeItem(CHANNEL);
+      localStorage.removeItem(SESSION);
 
       if (props.authorize !== this.props.authorize) {
         this.setState({ error: null, authResult: null, userInfo: null });
@@ -261,15 +268,29 @@ export default class Authorize extends Component {
 
     this.renewalTimer = setTimeout(async () => {
       try {
-        this.setState({
-          authResult: await this.renew(),
-        });
+        this.setState(
+          {
+            authResult: await this.renew(),
+          },
+          () => {
+            this.props.onAuthorize &&
+              this.props.onAuthorize({
+                authResult: this.state.authResult,
+                userInfo: this.state.userInfo,
+              });
+          }
+        );
       } catch (error) {
-        this.setState({
-          error,
-          authResult: null,
-          userInfo: null,
-        });
+        this.setState(
+          {
+            error,
+            authResult: null,
+            userInfo: null,
+          },
+          () => {
+            this.props.onError && this.props.onError(error);
+          }
+        );
       }
     }, delay);
   }
@@ -294,21 +315,31 @@ export default class Authorize extends Component {
         this.scheduleRenewal(authResult.expiresIn);
       }
 
-      if (this.props.onAuthorize) {
-        this.props.onAuthorize({ authResult, userInfo });
-      }
-
-      this.setState({
-        error: null,
-        authResult,
-        userInfo,
-      });
+      this.setState(
+        {
+          error: null,
+          authResult,
+          userInfo,
+        },
+        () => {
+          this.props.onAuthorize &&
+            this.props.onAuthorize({
+              authResult,
+              userInfo,
+            });
+        }
+      );
     } catch (error) {
-      this.setState({
-        error,
-        authResult: null,
-        userInfo: null,
-      });
+      this.setState(
+        {
+          error,
+          authResult: null,
+          userInfo: null,
+        },
+        () => {
+          this.props.onError && this.props.onError(error);
+        }
+      );
     }
   }
 
@@ -349,6 +380,10 @@ export default class Authorize extends Component {
 
   render() {
     const { render } = this.props;
+
+    if (!render) {
+      return null;
+    }
 
     return render({ ...this.state });
   }
