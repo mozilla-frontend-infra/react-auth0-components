@@ -303,7 +303,9 @@ export default class Authorize extends Component {
       const now = new Date();
       // eslint-disable-next-line no-nested-ternary
       const authResult = expiration
-        ? expiration > now ? session.authResult : await this.renew()
+        ? expiration > now
+          ? session.authResult
+          : await this.renew()
         : await this.parse();
       const userInfo = session
         ? session.userInfo
