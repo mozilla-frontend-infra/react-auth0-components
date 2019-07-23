@@ -1,5 +1,7 @@
 # React Auth0 Components
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/mozilla-frontend-infra/react-auth0-components.svg)](https://greenkeeper.io/)
+
 React components for making the authentication flows of Auth0 more declarative,
 using React paradigms. Supports authorization via redirect or `popup` flows,
 which can be used in single-page or multi-page apps.
