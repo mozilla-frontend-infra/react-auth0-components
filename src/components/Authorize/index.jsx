@@ -245,7 +245,9 @@ export default class Authorize extends Component {
       this.auth.checkSession({}, (err, authResult) => {
         if (authResult) {
           this.persistSession({ authResult });
-          this.scheduleRenewal(authResult.expiresIn);
+          // From https://tools.ietf.org/html/rfc6749#section-4.2.2, expiresIn
+          // is in seconds but setTimeout takes a delay in milliseconds
+          this.scheduleRenewal(authResult.expiresIn * 1000);
         }
 
         const error =
@@ -259,12 +261,10 @@ export default class Authorize extends Component {
       });
     });
 
-  scheduleRenewal() {
-    const expiration = new Date(
-      JSON.parse(localStorage.getItem(SESSION)).expiration
-    );
-    const now = new Date();
-    const delay = Math.max(0, expiration - now);
+  scheduleRenewal(delay) {
+    if (this.renewalTimer) {
+      clearTimeout(this.renewalTimer);
+    }
 
     this.renewalTimer = setTimeout(async () => {
       try {
@@ -314,7 +314,17 @@ export default class Authorize extends Component {
       this.persistSession({ authResult, userInfo });
 
       if (!this.props.disableAutoRenew) {
-        this.scheduleRenewal(authResult.expiresIn);
+        // Existing sessions will not have `authResult.expiresIn` up-to-date
+        // since, for existing sessions, the logic above will return
+        // whathever is in localStorage. We rely on the expiration
+        // field instead.
+        if (expiration) {
+          this.scheduleRenewal(expiration - new Date());
+        } else {
+          // From https://tools.ietf.org/html/rfc6749#section-4.2.2, expiresIn
+          // is in seconds but setTimeout takes a delay in milliseconds
+          this.scheduleRenewal(authResult.expiresIn * 1000);
+        }
       }
 
       this.setState(
