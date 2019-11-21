@@ -160,6 +160,22 @@ export default class Authorize extends Component {
     }
   }
 
+  handleLoginError(error) {
+    // https://auth0.com/docs/api-auth/tutorials/silent-authentication#error-response
+    if (
+      error.error === 'consent_required' ||
+      error.error === 'login_required' ||
+      error.error === 'interaction_required'
+    ) {
+      localStorage.removeItem(CHANNEL);
+      localStorage.removeItem(SESSION);
+    }
+
+    if (this.props.onError) {
+      this.props.onError(error);
+    }
+  }
+
   authCheck(props) {
     if (this.renewalTimer) {
       clearTimeout(this.renewalTimer);
@@ -288,7 +304,7 @@ export default class Authorize extends Component {
             userInfo: null,
           },
           () => {
-            this.props.onError && this.props.onError(error);
+            this.handleLoginError(error);
           }
         );
       }
@@ -349,7 +365,7 @@ export default class Authorize extends Component {
           userInfo: null,
         },
         () => {
-          this.props.onError && this.props.onError(error);
+          this.handleLoginError(error);
         }
       );
     }
