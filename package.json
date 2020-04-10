@@ -30,6 +30,6 @@
     "react-dom": "^16.2.0"
   },
   "dependencies": {
-    "auth0-js": "^9.3.3"
+    "auth0-js": "^9.13.2"
   }
 }
